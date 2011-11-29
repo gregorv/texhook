@@ -73,6 +73,14 @@ if __name__ == "__main__":
 					print "WARNING: No output created!"
 					continue
 				shutil.copy(build_target, publish_target)
+			else:
+				#print build_target, publish_target
+				if not os.path.exists(publish_target):
+					print "Copy file", target, "to publishing directory"
+					shutil.copy(build_target, publish_target)
+				elif os.path.getmtime(publish_target) < os.path.getmtime(build_target):
+					print "Copy newer version of", target, "to publishing directory"
+					shutil.copy(build_target, publish_target)
 		except LatexException, e:
 			print "Failed building", target, "\n", str(e)
 		except Exception, e:
