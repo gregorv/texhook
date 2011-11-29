@@ -49,7 +49,7 @@ if __name__ == "__main__":
 			detailed_file_list.append((filepath, "%s-vorbereitung-%s.pdf"%(experiment, who)))
 		else:
 			suffix = "auswertung"
-			if "aus" not in filename:
+			if "aus" not in filename and "kor" not in filename:
 				continue
 			elif "kor" in filename:
 				suffix = "errata"
