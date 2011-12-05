@@ -62,17 +62,21 @@ if __name__ == "__main__":
 			publish_target = os.path.join(PUBLISH_PATH, target)
 			if not upToDate(path):
 				print "Rebuild", target, "...", 
+				sys.stdout.flush()
 				output = compileFile(path)
 				if "undefined references" in output:
 					print "reference re-rebuild ...",
+					sys.stdout.flush()
 					output = compileFile(path)
 				print "done"
+				sys.stdout.flush()
 				if "undefined references" in output:
 					print "WARNING: There were undefined references"
 				if not os.path.exists(build_target):
 					print "WARNING: No output created!"
 					continue
 				shutil.copy(build_target, publish_target)
+				sys.stdout.flush()
 			else:
 				#print build_target, publish_target
 				if not os.path.exists(publish_target):
