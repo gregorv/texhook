@@ -64,7 +64,7 @@ if __name__ == "__main__":
 				print "Rebuild", target, "...", 
 				sys.stdout.flush()
 				output = compileFile(path)
-				if "undefined references" in output:
+				if "undefined references" in output or "Label(s) may have changed" in output or "Rerun" in output:
 					print "reference re-rebuild ...",
 					sys.stdout.flush()
 					output = compileFile(path)
