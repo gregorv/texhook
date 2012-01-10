@@ -40,13 +40,16 @@ if __name__ == "__main__":
 		filename = components[3]
 		if "vorbereitung" in type:
 			who = ""
+			suffix = ""
 			if "gregor" in filename:
 				who = "gregor"
 			elif "sven" in filename:
 				who = "sven"
 			else:
 				continue
-			detailed_file_list.append((filepath, "%s-vorbereitung-%s.pdf"%(experiment, who)))
+			if "korre" in filename or "err" in filename:
+				suffix="-errata"
+			detailed_file_list.append((filepath, "%s-vorbereitung-%s%s.pdf"%(experiment, who, suffix)))
 		else:
 			suffix = "auswertung"
 			if "aus" not in filename and "kor" not in filename:
