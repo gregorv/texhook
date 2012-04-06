@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import sys, os, random, shutil, traceback, subprocess
+import sys, os, random, shutil, traceback, subprocess, shlex
 from ConfigParser import ConfigParser
 
 class LatexException(Exception):
@@ -38,6 +38,16 @@ if __name__ == "__main__":
         traceback.print_exc()
         sys.exit(1)
     detailed_file_list = {}
+    
+    cwd = os.getcwd()
+    os.chdir(os.path.abspath(config.get("texhook", "repo_dir")))
+    # Reset the git repository and make sure it is up to date
+    # Ignore leaking of FDs
+    subprocess.call(shlex.split("git reset --hard"), stdout=open("/dev/null", "w"))
+    subprocess.call(shlex.split("git pull --rebase"), stdout=open("/dev/null", "w"))
+    os.chdir(cwd)
+    
+    
     # first, search for files automatically if possible
     try:
         mapper_mod = __import__(config.get("texhook", "automatic_tex2pdf_mapping_module"))
