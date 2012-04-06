@@ -46,7 +46,17 @@ if __name__ == "__main__":
         print "Automatically discovering files failed!"
         traceback.print_exc()
     
-    # apply manual mapping
+    if os.path.exists(config.get("texhook", "manual_tex2pdf_mapping")):
+        # apply manual mapping
+        try:
+            mapper = ConfigParser()
+            mapper.read(config.get("texhook", "manual_tex2pdf_mapping"))
+            detailed_file_list.update(dict(mapper.items("mapping")))
+        except Exception, e:
+            print "Applying manual config failed"
+            traceback.print_exc()
+    else:
+        print "No manual mapping."
     
     if len(detailed_file_list) == 0:
         print "No tex-files found. Maybe config is invalid?"
