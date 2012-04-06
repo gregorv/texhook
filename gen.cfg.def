@@ -1,0 +1,5 @@
+[texhook]
+publish_dir=htdocs
+repo_dir=repo
+manual_tex2pdf_mapping=%(repo_dir)s/manual.cfg
+automatic_tex2pdf_mapping_module=defaultmapper

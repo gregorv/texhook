@@ -1,8 +1,7 @@
 #!/usr/bin/env python
 
 import sys, os, random, shutil, traceback, subprocess
-
-PUBLISH_PATH = "/var/www/htdocs/prak"
+from ConfigParser import ConfigParser
 
 class LatexException(Exception):
     pass
@@ -19,8 +18,8 @@ def upToDate(filepath):
 
 def compileFile(filepath):
     path,filename = os.path.split(filepath)
-        texfile = os.path.splitext(filename)[0]
-        pdfpath = os.path.join(path, texfile+".pdf")
+    texfile = os.path.splitext(filename)[0]
+    pdfpath = os.path.join(path, texfile+".pdf")
     command = "cd \"%s\"; pdflatex -halt-on-error \"%s\"" % (path, texfile)
     pdflatex = subprocess.Popen(command,
     stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
@@ -31,38 +30,38 @@ def compileFile(filepath):
     return output
 
 if __name__ == "__main__":
-    file_list = sys.argv[1:]
-    detailed_file_list = []
-    for filepath in file_list:
-        components = filepath.split("/")
-        experiment = components[1]
-        type = components[2]
-        filename = components[3]
-        if "vorbereitung" in type:
-            who = ""
-            suffix = ""
-            if "gregor" in filename:
-                who = "gregor"
-            elif "sven" in filename:
-                who = "sven"
-            else:
-                continue
-            if "korre" in filename or "err" in filename:
-                suffix="-errata"
-            detailed_file_list.append((filepath, "%s-vorbereitung-%s%s.pdf"%(experiment, who, suffix)))
-        else:
-            suffix = "auswertung"
-            if "aus" not in filename and "kor" not in filename:
-                continue
-            elif "kor" in filename:
-                suffix = "errata"
-            detailed_file_list.append((filepath, "%s-%s.pdf"%(experiment, suffix)))
+    config = ConfigParser()
+    try:
+        config.read("gen.cfg")
+    except Exception, e:
+        print "Cannot read configuration"
+        traceback.print_exc()
+        sys.exit(1)
+    detailed_file_list = {}
+    # first, search for files automatically if possible
+    try:
+        mapper_mod = __import__(config.get("texhook", "automatic_tex2pdf_mapping_module"))
+        detailed_file_list = mapper_mod.mapper(config.get("texhook", "repo_dir"))
+    except Exception, e:
+        print "Automatically discovering files failed!"
+        traceback.print_exc()
+    
+    # apply manual mapping
+    
+    if len(detailed_file_list) == 0:
+        print "No tex-files found. Maybe config is invalid?"
+        sys.exit(1)
 
-
-    for path,target in detailed_file_list:
+    # Compile latex documents and copy to publish directory
+    for path,target in detailed_file_list.iteritems():
         try:
             build_target = os.path.splitext(path)[0]+".pdf"
-            publish_target = os.path.join(PUBLISH_PATH, target)
+            publish_target = os.path.join(config.get("texhook", "publish_dir"), target)
+            try:
+                os.makedirs(os.path.dirname(publish_target))
+                print "Created target directory"
+            except os.error:
+                pass
             if not upToDate(path):
                 print "Rebuild", target, "...", 
                 sys.stdout.flush()
