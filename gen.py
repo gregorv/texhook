@@ -1,7 +1,17 @@
 #!/usr/bin/env python
 
 import sys, os, random, shutil, traceback, subprocess, shlex
+
 from ConfigParser import ConfigParser
+
+def text_color(string, color):
+	return "\x1b[%im%s\x1b[39m" % (int(color) + 30, string)
+def text_bold(string):
+	return "\x1b[1m%s\x1b[0m" % string
+
+COLOR_ERROR = 1
+COLOR_FILE = 2
+COLOR_UNDEF_REFERENCE = 3
 
 class LatexException(Exception):
     pass
@@ -30,11 +40,13 @@ def compileFile(filepath):
     return output
 
 if __name__ == "__main__":
+    os.chdir(os.path.dirname(os.path.abspath(__file__)))
+
     config = ConfigParser()
     try:
         config.read("gen.cfg")
     except Exception, e:
-        print "Cannot read configuration"
+        print text_color("Cannot read configuration", COLOR_ERROR)
         traceback.print_exc()
         sys.exit(1)
     detailed_file_list = {}
@@ -53,7 +65,7 @@ if __name__ == "__main__":
         mapper_mod = __import__(config.get("texhook", "automatic_tex2pdf_mapping_module"))
         detailed_file_list = mapper_mod.mapper(config.get("texhook", "repo_dir"))
     except Exception, e:
-        print "Automatically discovering files failed!"
+        print text_color("Automatically discovering files failed!", COLOR_ERROR)
         traceback.print_exc()
     
     if os.path.exists(config.get("texhook", "manual_tex2pdf_mapping")):
@@ -63,7 +75,7 @@ if __name__ == "__main__":
             mapper.read(config.get("texhook", "manual_tex2pdf_mapping"))
             detailed_file_list.update(dict(mapper.items("mapping")))
         except Exception, e:
-            print "Applying manual config failed"
+            print text_color("Applying manual config failed")
             traceback.print_exc()
     else:
         print "No manual mapping."
@@ -83,19 +95,19 @@ if __name__ == "__main__":
             except os.error:
                 pass
             if not upToDate(path):
-                print "Rebuild", target, "...", 
+                print text_bold("Rebuild"), text_color(target, COLOR_FILE), "...", 
                 sys.stdout.flush()
                 output = compileFile(path)
                 if "undefined references" in output or "Label(s) may have changed" in output or "Rerun" in output:
                     print "reference re-rebuild ...",
                     sys.stdout.flush()
                     output = compileFile(path)
-                print "done"
+                print text_bold("done")
                 sys.stdout.flush()
                 if "undefined references" in output:
-                    print "WARNING: There were undefined references"
+                    print text_color("WARNING:", COLOR_WARNING), "There were undefined references"
                 if not os.path.exists(build_target):
-                    print "WARNING: No output created!"
+                    print text_color("WARNING:", COLOR_WARNING), "No output created!"
                     continue
                 shutil.copy(build_target, publish_target)
                 sys.stdout.flush()
@@ -108,7 +120,7 @@ if __name__ == "__main__":
                     print "Copy newer version of", target, "to publishing directory"
                     shutil.copy(build_target, publish_target)
         except LatexException, e:
-            print "Failed building", target, "\n", str(e)
+            print text_color("Failed building", COLOR_ERROR), text_color(target, COLOR_FILE), "\n", str(e)
         except Exception, e:
-            print "Failed building", target
-            traceback.print_exc()
+            print text_color("Failed building", COLOR_ERROR), text_color(target, COLOR_FILE)
+            traceback.print_exc() 
